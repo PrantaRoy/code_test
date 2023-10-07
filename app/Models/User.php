@@ -3,10 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\AcTypeEnum;
+use App\Models\Transaction;
+use Illuminate\Support\Carbon;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -21,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'account_type'
     ];
 
     /**
@@ -41,5 +45,22 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'ac_type' => AcTypeEnum::class
     ];
+
+
+    public function trnasactions(){
+        return $this->hasMany(Transaction::class,'user_id','id');
+    }
+
+    public function currentMonthWithdraw(){
+        return  $this->trnasactions()->where('transaction_type', 'withdraw')
+        ->whereYear('created_at', Carbon::now()->year)
+        ->whereMonth('created_at', Carbon::now()->month)
+        ->sum('amount') ;
+    }
+
+    public function totalWithdraw(){
+        return  $this->trnasactions->where('transaction_type', 'withdraw')->sum('amount') ;
+    }
 }
